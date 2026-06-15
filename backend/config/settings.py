@@ -25,7 +25,7 @@ INSTALLED_APPS = [
     "django_filters",
     # local — add new phases here
     "apps.accounts",
-    # "apps.records",      # Phase 2
+    "apps.records",      
     # "apps.audit",        # Phase 3
     # "apps.emergency",    # Phase 4
     # "apps.timeline",     # Phase 5

@@ -10,7 +10,7 @@ class RegisterSerializer(serializers.ModelSerializer):
     password2 = serializers.CharField(write_only=True)
 
     class Meta:
-        model = User
+        model  = User
         fields = ["email", "username", "first_name", "last_name", "password", "password2"]
 
     def validate(self, data):
@@ -28,7 +28,7 @@ class RegisterSerializer(serializers.ModelSerializer):
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model  = User
-        fields = ["id", "email", "username", "first_name", "last_name", "date_joined"]
+        fields = ["id", "email", "username", "first_name", "last_name", "role", "date_joined"]
         read_only_fields = fields
 
 

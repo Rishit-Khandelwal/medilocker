@@ -2,10 +2,11 @@ import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext.jsx";
 
 const NAV = [
-  { to: "/dashboard", label: "Dashboard" },
-  { to: "/records",   label: "Records" },
-  // Phase 5: { to: "/timeline", label: "Timeline" },
-  // Phase 8: { to: "/ai",       label: "AI Assistant" },
+  { to: "/dashboard",        label: "Dashboard" },
+  { to: "/records",          label: "Records" },
+  { to: "/emergency/manage", label: "Emergency" },
+  // Phase 5: { to: "/timeline",  label: "Timeline" },
+  // Phase 8: { to: "/ai",        label: "AI Assistant" },
 ];
 
 export default function Layout({ children }) {
@@ -44,6 +45,11 @@ export default function Layout({ children }) {
           </div>
           <div className="flex items-center gap-4">
             <span className="text-xs text-gray-400 hidden sm:block">{user?.email}</span>
+            {user?.role && user.role !== "PATIENT" && (
+              <span className="text-xs px-2 py-0.5 bg-gray-100 text-gray-600 rounded-full hidden sm:block capitalize">
+                {user.role.toLowerCase()}
+              </span>
+            )}
             <button onClick={handleLogout}
               className="text-sm text-gray-500 hover:text-gray-800 font-medium transition-colors">
               Sign out

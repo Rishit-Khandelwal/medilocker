@@ -7,8 +7,8 @@ urlpatterns = [
     path("admin/", admin.site.urls),
     path("api/auth/",      include("apps.accounts.urls")),
     path("api/records/",   include("apps.records.urls")),      # Phase 2
-    # path("api/security/",  include("apps.audit.urls")),        # Phase 3
-    # path("api/emergency/", include("apps.emergency.urls")),    # Phase 4
+    path("api/security/",  include("apps.audit.urls")),        # Phase 3
+    path("api/emergency/", include("apps.emergency.urls")),    # Phase 4
     # path("api/timeline/",  include("apps.timeline.urls")),     # Phase 5
     # path("api/notify/",    include("apps.notifications.urls")),# Phase 6
     # path("api/search/",    include("apps.rag.urls")),          # Phase 7

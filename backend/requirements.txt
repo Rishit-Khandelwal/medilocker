@@ -6,3 +6,4 @@ psycopg2-binary==2.9.9
 python-decouple==3.8
 Pillow==10.2.0
 django-filter==23.5
+qrcode[pil]==7.4.2

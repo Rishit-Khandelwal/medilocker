@@ -26,8 +26,8 @@ INSTALLED_APPS = [
     # local — add new phases here
     "apps.accounts",
     "apps.records",      
-    # "apps.audit",        # Phase 3
-    # "apps.emergency",    # Phase 4
+    "apps.audit",        
+    "apps.emergency",    
     # "apps.timeline",     # Phase 5
     # "apps.notifications",# Phase 6
     # "apps.rag",          # Phase 7
@@ -111,8 +111,19 @@ REST_FRAMEWORK = {
     "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
     "PAGE_SIZE": 20,
     "DEFAULT_RENDERER_CLASSES": ["rest_framework.renderers.JSONRenderer"],
+    # Phase 3: throttling (uses LocMemCache in dev; swap for Redis in production)
+    "DEFAULT_THROTTLE_CLASSES": [
+        "rest_framework.throttling.AnonRateThrottle",
+        "rest_framework.throttling.UserRateThrottle",
+    ],
+    "DEFAULT_THROTTLE_RATES": {
+        "anon":              "200/day",
+        "user":              "2000/day",
+        "login":             "5/minute",
+        "upload":            "30/hour",
+        "emergency_access":  "10/minute",
+    },
 }
-
 # ── JWT ───────────────────────────────────────────────────────────────────────
 SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(minutes=60),

@@ -6,7 +6,9 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenObtainPairView
 from django.contrib.auth import get_user_model
 
-from .serializers import RegisterSerializer, UserSerializer, ProfileSerializer
+from .serializers import (
+    RegisterSerializer, UserSerializer, ProfileSerializer, VerificationRequestSerializer,
+)
 from .throttles import LoginRateThrottle
 
 User = get_user_model()
@@ -24,21 +26,19 @@ class RegisterView(generics.CreateAPIView):
         refresh = RefreshToken.for_user(user)
         return Response(
             {
-                "user": UserSerializer(user).data,
+                "user":               UserSerializer(user).data,
                 "tokens": {
                     "access":  str(refresh.access_token),
                     "refresh": str(refresh),
                 },
+                # Frontend uses this flag to redirect to /pending-verification
+                "needs_verification": not user.is_verified,
             },
             status=status.HTTP_201_CREATED,
         )
 
 
 class RateLimitedLoginView(TokenObtainPairView):
-    """
-    JWT login — rate-limited to 5 attempts/minute per IP.
-    Emits LOGIN audit log on success.
-    """
     throttle_classes = [LoginRateThrottle]
 
     def post(self, request, *args, **kwargs):
@@ -49,7 +49,7 @@ class RateLimitedLoginView(TokenObtainPairView):
                 user = User.objects.get(email=request.data.get("email", ""))
                 log_action(user, "LOGIN", request=request)
             except Exception:
-                pass  # never block login on audit failure
+                pass
         return response
 
 
@@ -86,3 +86,19 @@ class ProfileView(generics.RetrieveUpdateAPIView):
 
     def get_object(self):
         return self.request.user.profile
+
+
+class VerificationStatusView(generics.RetrieveAPIView):
+    """
+    Returns the current user's most recent verification request.
+    Used by the frontend /pending-verification page to poll status.
+    GET /api/auth/verification-status/
+    """
+    permission_classes = [IsAuthenticated]
+    serializer_class   = VerificationRequestSerializer
+
+    def retrieve(self, request, *args, **kwargs):
+        req = request.user.verification_requests.order_by("-submitted_at").first()
+        if not req:
+            return Response({"detail": "No verification request found."}, status=404)
+        return Response(VerificationRequestSerializer(req).data)

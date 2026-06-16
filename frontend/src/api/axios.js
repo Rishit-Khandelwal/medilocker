@@ -5,14 +5,17 @@ const api = axios.create({
   headers: { "Content-Type": "application/json" },
 });
 
-// Attach access token to every request
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem("access_token");
   if (token) config.headers.Authorization = `Bearer ${token}`;
+  // For FormData (file uploads), delete the default JSON Content-Type so
+  // axios sets multipart/form-data with the correct boundary automatically.
+  if (config.data instanceof FormData) {
+    delete config.headers["Content-Type"];
+  }
   return config;
 });
 
-// Silently refresh when access token expires (401)
 api.interceptors.response.use(
   (res) => res,
   async (err) => {
@@ -24,7 +27,7 @@ api.interceptors.response.use(
         const { data } = await axios.post("/api/auth/token/refresh/", { refresh });
         localStorage.setItem("access_token", data.access);
         original.headers.Authorization = `Bearer ${data.access}`;
-        return api(original);           // retry original request
+        return api(original);
       } catch {
         localStorage.clear();
         window.location.href = "/login";

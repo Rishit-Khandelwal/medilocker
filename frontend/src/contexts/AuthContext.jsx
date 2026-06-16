@@ -18,7 +18,6 @@ export function AuthProvider({ children }) {
     }
   }, []);
 
-  // Re-hydrate user on page refresh if token exists
   useEffect(() => {
     if (localStorage.getItem("access_token")) fetchUser();
     else setLoading(false);
@@ -32,10 +31,12 @@ export function AuthProvider({ children }) {
   };
 
   const register = async (payload) => {
+    // payload may be a plain object (PATIENT) or FormData (DOCTOR/RESPONDER)
     const { data } = await api.post("/auth/register/", payload);
     localStorage.setItem("access_token", data.tokens.access);
     localStorage.setItem("refresh_token", data.tokens.refresh);
     setUser(data.user);
+    return data;   // caller inspects data.needs_verification to decide redirect
   };
 
   const logout = async () => {

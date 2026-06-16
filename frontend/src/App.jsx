@@ -10,6 +10,7 @@ import RecordDetail            from "./pages/RecordDetail.jsx";
 import EmergencyManagement     from "./pages/EmergencyManagement.jsx";
 import EmergencyPublic         from "./pages/EmergencyPublic.jsx";
 import PendingVerification     from "./pages/PendingVerification.jsx";
+import Settings                from "./pages/Settings.jsx";
 
 export default function App() {
   return (
@@ -22,12 +23,13 @@ export default function App() {
           <Route path="/emergency/:token"   element={<EmergencyPublic />} />
 
           {/* Protected */}
-          <Route path="/dashboard"          element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-          <Route path="/records"            element={<ProtectedRoute><Records /></ProtectedRoute>} />
-          <Route path="/records/upload"     element={<ProtectedRoute><Upload /></ProtectedRoute>} />
-          <Route path="/records/:id"        element={<ProtectedRoute><RecordDetail /></ProtectedRoute>} />
-          <Route path="/emergency/manage"   element={<ProtectedRoute><EmergencyManagement /></ProtectedRoute>} />
+          <Route path="/dashboard"            element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+          <Route path="/records"              element={<ProtectedRoute><Records /></ProtectedRoute>} />
+          <Route path="/records/upload"       element={<ProtectedRoute><Upload /></ProtectedRoute>} />
+          <Route path="/records/:id"          element={<ProtectedRoute><RecordDetail /></ProtectedRoute>} />
+          <Route path="/emergency/manage"     element={<ProtectedRoute><EmergencyManagement /></ProtectedRoute>} />
           <Route path="/pending-verification" element={<ProtectedRoute><PendingVerification /></ProtectedRoute>} />
+          <Route path="/settings"             element={<ProtectedRoute><Settings /></ProtectedRoute>} />
 
           {/* Phase 5+: /timeline, /medications, /ai */}
           <Route path="*" element={<Navigate to="/dashboard" replace />} />

@@ -55,3 +55,9 @@ class IsOwnerOrAdmin(BasePermission):
             or getattr(obj, "user",    None)
         )
         return owner == request.user
+    
+class IsResponderOrAdmin(BasePermission):
+    """Responder, Admin, or SuperAdmin — used for emergency-access reporting views."""
+    def has_permission(self, request, view):
+        return bool(request.user and request.user.is_authenticated
+                    and request.user.role in [Role.RESPONDER, Role.ADMIN, Role.SUPERADMIN])

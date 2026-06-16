@@ -1,18 +1,37 @@
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext.jsx";
 
-const NAV = [
-  { to: "/dashboard",        label: "Dashboard" },
-  { to: "/records",          label: "Records" },
-  { to: "/emergency/manage", label: "Emergency" },
-  // Phase 5: { to: "/timeline",  label: "Timeline" },
-  // Phase 8: { to: "/ai",        label: "AI Assistant" },
-];
+// TODO: move to env var for production deployment
+const BACKEND_ORIGIN = "http://localhost:8000";
+
+function getNavItems(role) {
+  const dashboard = { to: "/dashboard", label: "Dashboard" };
+  const settings  = { to: "/settings", label: "Settings" };
+
+  if (role === "PATIENT") {
+    return [
+      dashboard,
+      { to: "/records", label: "Records" },
+      { to: "/emergency/manage", label: "Emergency" },
+      settings,
+    ];
+  }
+  if (role === "ADMIN" || role === "SUPERADMIN") {
+    return [
+      dashboard,
+      settings,
+      { href: `${BACKEND_ORIGIN}/admin/`, label: "Admin Panel", external: true },
+    ];
+  }
+  // DOCTOR, RESPONDER — sidebar items beyond Dashboard/Settings are not built yet
+  return [dashboard, settings];
+}
 
 export default function Layout({ children }) {
   const { user, logout } = useAuth();
   const navigate         = useNavigate();
   const { pathname }     = useLocation();
+  const navItems         = getNavItems(user?.role);
 
   const handleLogout = async () => {
     await logout();
@@ -31,16 +50,23 @@ export default function Layout({ children }) {
               <span className="font-semibold text-gray-900 text-sm">MediLocker</span>
             </div>
             <div className="hidden sm:flex items-center gap-1">
-              {NAV.map(({ to, label }) => (
-                <Link key={to} to={to}
-                  className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-                    pathname.startsWith(to)
-                      ? "bg-primary-50 text-primary-700"
-                      : "text-gray-500 hover:text-gray-900 hover:bg-gray-100"
-                  }`}>
-                  {label}
-                </Link>
-              ))}
+              {navItems.map((item) =>
+                item.external ? (
+                  <a key={item.label} href={item.href} target="_blank" rel="noreferrer"
+                    className="px-3 py-1.5 rounded-lg text-sm font-medium text-gray-500 hover:text-gray-900 hover:bg-gray-100 transition-colors">
+                    {item.label} ↗
+                  </a>
+                ) : (
+                  <Link key={item.to} to={item.to}
+                    className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                      pathname.startsWith(item.to)
+                        ? "bg-primary-50 text-primary-700"
+                        : "text-gray-500 hover:text-gray-900 hover:bg-gray-100"
+                    }`}>
+                    {item.label}
+                  </Link>
+                )
+              )}
             </div>
           </div>
           <div className="flex items-center gap-4">

@@ -5,11 +5,15 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenObtainPairView
 from django.contrib.auth import get_user_model
+from django.db.models import Count
+from .models import Profile  
 
 from .serializers import (
     RegisterSerializer, UserSerializer, ProfileSerializer, VerificationRequestSerializer,
 )
 from .throttles import LoginRateThrottle
+from .permissions import IsAdmin
+from .models import Role, VerificationRequest
 
 User = get_user_model()
 
@@ -31,7 +35,6 @@ class RegisterView(generics.CreateAPIView):
                     "access":  str(refresh.access_token),
                     "refresh": str(refresh),
                 },
-                # Frontend uses this flag to redirect to /pending-verification
                 "needs_verification": not user.is_verified,
             },
             status=status.HTTP_201_CREATED,
@@ -85,15 +88,11 @@ class ProfileView(generics.RetrieveUpdateAPIView):
     serializer_class   = ProfileSerializer
 
     def get_object(self):
-        return self.request.user.profile
+        profile, _ = Profile.objects.get_or_create(user=self.request.user)
+        return profile
 
 
 class VerificationStatusView(generics.RetrieveAPIView):
-    """
-    Returns the current user's most recent verification request.
-    Used by the frontend /pending-verification page to poll status.
-    GET /api/auth/verification-status/
-    """
     permission_classes = [IsAuthenticated]
     serializer_class   = VerificationRequestSerializer
 
@@ -102,3 +101,33 @@ class VerificationStatusView(generics.RetrieveAPIView):
         if not req:
             return Response({"detail": "No verification request found."}, status=404)
         return Response(VerificationRequestSerializer(req).data)
+
+
+class AdminStatsView(APIView):
+    """
+    Admin/SuperAdmin only — aggregate counts for the Admin & SuperAdmin dashboards.
+    GET /api/auth/admin/stats/
+    """
+    permission_classes = [IsAdmin]
+
+    def get(self, request):
+        role_counts = dict(User.objects.values_list("role").annotate(n=Count("id")).order_by())
+        role_distribution = {r: role_counts.get(r, 0) for r in Role.values}
+
+        pending_verifications = VerificationRequest.objects.filter(
+            status=VerificationRequest.Status.PENDING
+        ).count()
+
+        # Lazy import — avoids a hard dependency between accounts <-> records apps
+        try:
+            from apps.records.models import MedicalRecord
+            total_records = MedicalRecord.objects.count()
+        except Exception:
+            total_records = 0
+
+        return Response({
+            "total_users":           User.objects.count(),
+            "role_distribution":     role_distribution,
+            "pending_verifications": pending_verifications,
+            "total_records":         total_records,
+        })

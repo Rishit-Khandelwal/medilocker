@@ -1,13 +1,15 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
+import { Mail, Lock, ArrowRight, ShieldCheck, Github, Chrome } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext.jsx";
 
 export default function Login() {
-  const [form, setForm]     = useState({ email: "", password: "" });
-  const [error, setError]   = useState("");
+  const [form, setForm]       = useState({ email: "", password: "" });
+  const [error, setError]     = useState("");
   const [loading, setLoading] = useState(false);
-  const { login }   = useAuth();
-  const navigate    = useNavigate();
+  const { login } = useAuth();
+  const navigate  = useNavigate();
 
   const submit = async (e) => {
     e.preventDefault();
@@ -24,77 +26,111 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 px-4">
-      <div className="mx-auto w-full max-w-md">
-        <Logo />
-        <h1 className="mt-4 text-center text-2xl font-bold text-gray-900">MediLocker</h1>
-        <p className="mt-1 text-center text-sm text-gray-500">Sign in to your account</p>
+    <div className="min-h-screen flex bg-bg">
+      {/* Left — hero, the one panel allowed to feel premium */}
+      <div className="hidden lg:flex w-1/2 relative overflow-hidden bg-gradient-to-br from-blue-700 via-blue-600 to-indigo-700">
+        <div className="absolute inset-0 opacity-[0.07]"
+          style={{ backgroundImage: "radial-gradient(circle at 1px 1px, white 1px, transparent 0)", backgroundSize: "28px 28px" }} />
+        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}
+          className="relative z-10 flex flex-col justify-between p-12 text-white w-full">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-lg bg-white/15 backdrop-blur flex items-center justify-center">
+              <span className="font-bold text-sm">M</span>
+            </div>
+            <span className="font-semibold">MediLocker</span>
+          </div>
 
-        <div className="mt-6 bg-white rounded-xl border border-gray-200 shadow-sm p-8">
-          {error && <Alert>{error}</Alert>}
-          <form onSubmit={submit} className="space-y-4">
-            <Field label="Email">
-              <input type="email" required autoComplete="email"
-                value={form.email}
-                onChange={(e) => setForm({ ...form, email: e.target.value })}
-                className={input} placeholder="you@example.com" />
-            </Field>
-            <Field label="Password">
-              <input type="password" required autoComplete="current-password"
-                value={form.password}
-                onChange={(e) => setForm({ ...form, password: e.target.value })}
-                className={input} placeholder="••••••••" />
-            </Field>
-            <Btn loading={loading}>Sign in</Btn>
+          <div>
+            <h1 className="text-3xl font-semibold leading-tight max-w-md">
+              One secure vault for every health record you own.
+            </h1>
+            <p className="mt-3 text-white/70 max-w-sm text-sm">
+              Encrypted storage, emergency-ready access, and role-based control — built for patients, doctors, and responders alike.
+            </p>
+
+            <div className="mt-8 backdrop-blur-md bg-white/10 border border-white/15 rounded-2xl p-5 max-w-sm">
+              <div className="flex items-center gap-2 text-sm font-medium">
+                <ShieldCheck className="w-4 h-4" /> Emergency access, audited
+              </div>
+              <p className="text-xs text-white/60 mt-1.5">
+                Every QR scan and emergency view is logged automatically — full transparency, every time.
+              </p>
+            </div>
+          </div>
+
+          <p className="text-xs text-white/40">© {new Date().getFullYear()} MediLocker</p>
+        </motion.div>
+      </div>
+
+      {/* Right — form */}
+      <div className="flex-1 flex items-center justify-center px-4 py-12">
+        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}
+          className="w-full max-w-sm">
+          <div className="lg:hidden flex items-center gap-2 mb-8 justify-center">
+            <div className="w-8 h-8 rounded-lg bg-accent flex items-center justify-center">
+              <span className="text-white font-bold text-sm">M</span>
+            </div>
+            <span className="font-semibold text-foreground">MediLocker</span>
+          </div>
+
+          <h2 className="text-xl font-semibold text-foreground">Sign in</h2>
+          <p className="text-sm text-muted mt-1">Welcome back — enter your details below.</p>
+
+          {error && (
+            <div className="mt-5 p-3 rounded-lg bg-danger/10 border border-danger/20 text-danger text-sm">{error}</div>
+          )}
+
+          <form onSubmit={submit} className="mt-6 space-y-4">
+            <div>
+              <label className="block text-xs font-medium text-muted mb-1.5">Email</label>
+              <div className="relative">
+                <Mail className="w-4 h-4 text-muted absolute left-3 top-1/2 -translate-y-1/2" />
+                <input type="email" required autoComplete="email" value={form.email}
+                  onChange={(e) => setForm({ ...form, email: e.target.value })}
+                  placeholder="you@example.com"
+                  className="w-full bg-surface border border-border rounded-lg pl-9 pr-3 py-2.5 text-sm text-foreground placeholder:text-muted focus:outline-none focus:ring-1 focus:ring-accent focus:border-accent transition-colors" />
+              </div>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-muted mb-1.5">Password</label>
+              <div className="relative">
+                <Lock className="w-4 h-4 text-muted absolute left-3 top-1/2 -translate-y-1/2" />
+                <input type="password" required autoComplete="current-password" value={form.password}
+                  onChange={(e) => setForm({ ...form, password: e.target.value })}
+                  placeholder="••••••••"
+                  className="w-full bg-surface border border-border rounded-lg pl-9 pr-3 py-2.5 text-sm text-foreground placeholder:text-muted focus:outline-none focus:ring-1 focus:ring-accent focus:border-accent transition-colors" />
+              </div>
+            </div>
+
+            <button type="submit" disabled={loading}
+              className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-lg bg-accent text-white text-sm font-medium hover:bg-accent/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+              {loading ? "Signing in…" : <>Sign in <ArrowRight className="w-3.5 h-3.5" /></>}
+            </button>
           </form>
-          <p className="mt-5 text-center text-sm text-gray-500">
+
+          <div className="flex items-center gap-2 my-5">
+            <div className="flex-1 h-px bg-border" />
+            <span className="text-xs text-muted">or continue with</span>
+            <div className="flex-1 h-px bg-border" />
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <button disabled title="Coming soon"
+              className="flex items-center justify-center gap-2 py-2.5 rounded-lg border border-border text-sm text-muted opacity-50 cursor-not-allowed">
+              <Chrome className="w-4 h-4" /> Google
+            </button>
+            <button disabled title="Coming soon"
+              className="flex items-center justify-center gap-2 py-2.5 rounded-lg border border-border text-sm text-muted opacity-50 cursor-not-allowed">
+              <Github className="w-4 h-4" /> GitHub
+            </button>
+          </div>
+
+          <p className="mt-7 text-center text-sm text-muted">
             No account?{" "}
-            <Link to="/register" className="text-primary-600 hover:text-primary-700 font-medium">Register</Link>
+            <Link to="/register" className="text-accent hover:underline font-medium">Create one</Link>
           </p>
-        </div>
+        </motion.div>
       </div>
     </div>
-  );
-}
-
-// ── shared micro-components (Login + Register share these) ────────────────────
-const input = "w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500";
-
-function Logo() {
-  return (
-    <div className="flex justify-center">
-      <div className="w-12 h-12 bg-primary-600 rounded-xl flex items-center justify-center">
-        <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-        </svg>
-      </div>
-    </div>
-  );
-}
-
-function Alert({ children }) {
-  return (
-    <div className="mb-4 p-3 rounded-lg bg-red-50 border border-red-100 text-red-700 text-sm">
-      {children}
-    </div>
-  );
-}
-
-function Field({ label, children }) {
-  return (
-    <div>
-      <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
-      {children}
-    </div>
-  );
-}
-
-function Btn({ loading, children }) {
-  return (
-    <button type="submit" disabled={loading}
-      className="w-full py-2.5 rounded-lg bg-primary-600 text-white text-sm font-medium hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
-      {loading ? "Please wait…" : children}
-    </button>
   );
 }

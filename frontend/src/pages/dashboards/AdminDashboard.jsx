@@ -1,8 +1,11 @@
 import { useState, useEffect } from "react";
+import { Users, FileCheck2, FileText, Tag, CircleDot, ShieldAlert, Database, Flag } from "lucide-react";
 import api from "../../api/axios.js";
+import Card from "../../components/ui/Card.jsx";
+import StatCard from "../../components/ui/StatCard.jsx";
 import ComingSoonCard from "../../components/ComingSoonCard.jsx";
 
-const BACKEND_ORIGIN = "http://localhost:8000"; // TODO: move to env var for production
+const BACKEND_ORIGIN = "http://localhost:8000"; // TODO: env var for production
 
 export default function AdminDashboard() {
   const [stats, setStats]   = useState(null);
@@ -22,83 +25,66 @@ export default function AdminDashboard() {
   return (
     <div>
       <div className="mb-6">
-        <h1 className="text-xl font-bold text-gray-900">Admin Dashboard</h1>
-        <p className="text-sm text-gray-500 mt-0.5">System overview &amp; moderation</p>
+        <h1 className="text-xl font-semibold text-foreground">Admin dashboard</h1>
+        <p className="text-sm text-muted mt-0.5">System overview &amp; moderation</p>
       </div>
 
-      {/* Real stat row */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <Stat label="Total Users" value={stats?.total_users} icon="👥" />
+        <StatCard icon={Users}      label="Total Users" value={stats?.total_users} loading={loading} />
         <a href={`${BACKEND_ORIGIN}/admin/accounts/verificationrequest/?status=PENDING`} target="_blank" rel="noreferrer">
-          <Stat label="Pending Verifications" value={stats?.pending_verifications} icon="🛂" highlight />
+          <StatCard icon={FileCheck2} label="Pending Verifications" value={stats?.pending_verifications} loading={loading} accent />
         </a>
-        <Stat label="Total Records" value={stats?.total_records} icon="📋" />
-        <Stat label="Roles Tracked" value={stats ? Object.keys(stats.role_distribution).length : null} icon="🏷️" />
+        <StatCard icon={FileText}   label="Total Records" value={stats?.total_records} loading={loading} />
+        <StatCard icon={Tag}        label="Roles Tracked" value={stats ? Object.keys(stats.role_distribution).length : null} loading={loading} />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-5">
-        {/* Role distribution */}
-        <div className="bg-white rounded-xl border border-gray-200 p-5">
-          <h3 className="font-semibold text-gray-900 text-sm mb-3">Role Distribution</h3>
+        <Card>
+          <h3 className="font-medium text-foreground text-sm mb-3">Role distribution</h3>
           {loading ? (
-            <p className="text-xs text-gray-400">Loading…</p>
+            <p className="text-xs text-muted">Loading…</p>
           ) : (
             <div className="space-y-2">
               {Object.entries(stats?.role_distribution || {}).map(([role, count]) => (
                 <div key={role} className="flex items-center justify-between text-sm">
-                  <span className="text-gray-600 capitalize">{role.toLowerCase()}</span>
-                  <span className="font-medium text-gray-900">{count}</span>
+                  <span className="text-muted capitalize">{role.toLowerCase()}</span>
+                  <span className="font-medium text-foreground tabular-nums">{count}</span>
                 </div>
               ))}
             </div>
           )}
-        </div>
+        </Card>
 
-        {/* Recent audit activity */}
-        <div className="bg-white rounded-xl border border-gray-200 p-5">
-          <h3 className="font-semibold text-gray-900 text-sm mb-3">Recent Audit Activity</h3>
+        <Card>
+          <h3 className="font-medium text-foreground text-sm mb-3">Recent audit activity</h3>
           {loading ? (
-            <p className="text-xs text-gray-400">Loading…</p>
+            <p className="text-xs text-muted">Loading…</p>
           ) : audit.length === 0 ? (
-            <p className="text-xs text-gray-400">No activity yet.</p>
+            <p className="text-xs text-muted">No activity yet.</p>
           ) : (
             <div className="space-y-2 max-h-64 overflow-y-auto">
               {audit.slice(0, 12).map((a) => (
-                <div key={a.id} className="flex items-center justify-between text-xs border-b border-gray-50 last:border-0 pb-1.5">
-                  <span className="text-gray-700">
+                <div key={a.id} className="flex items-center justify-between text-xs border-b border-border last:border-0 pb-1.5">
+                  <span className="text-foreground">
                     <span className="font-medium">{a.action_display}</span>
                     {a.user_email ? ` · ${a.user_email}` : ""}
                   </span>
-                  <span className="text-gray-400 flex-shrink-0 ml-2">
+                  <span className="text-muted flex-shrink-0 ml-2">
                     {new Date(a.timestamp).toLocaleString("en-IN")}
                   </span>
                 </div>
               ))}
             </div>
           )}
-        </div>
+        </Card>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        <ComingSoonCard icon="🟢" title="Active Sessions" note="Future" />
-        <ComingSoonCard icon="🛡️" title="Security Alerts" note="Future" />
-        <ComingSoonCard icon="💾" title="Storage Usage"    note="Future" />
-        <ComingSoonCard icon="🚩" title="Abuse Reports"    note="Future" />
+        <ComingSoonCard icon={CircleDot}   title="Active Sessions" note="Future" />
+        <ComingSoonCard icon={ShieldAlert} title="Security Alerts" note="Future" />
+        <ComingSoonCard icon={Database}    title="Storage Usage" note="Future" />
+        <ComingSoonCard icon={Flag}        title="Abuse Reports" note="Future" />
       </div>
-    </div>
-  );
-}
-
-function Stat({ label, value, icon, highlight }) {
-  return (
-    <div className={`bg-white rounded-xl border p-4 flex items-center justify-between transition-colors ${
-      highlight ? "border-amber-300 hover:border-amber-400" : "border-gray-200"
-    }`}>
-      <div>
-        <p className="text-xs font-medium text-gray-500">{label}</p>
-        <p className="text-2xl font-bold text-gray-900 mt-1">{value ?? "…"}</p>
-      </div>
-      <span className="text-2xl opacity-50">{icon}</span>
     </div>
   );
 }

@@ -19,7 +19,7 @@ export default function Dashboard() {
   const RoleDashboard = DASHBOARD_BY_ROLE[user?.role] || PatientDashboard;
 
   return (
-    <Layout>
+    <Layout breadcrumb={["Dashboard"]}>
       <RoleDashboard />
     </Layout>
   );

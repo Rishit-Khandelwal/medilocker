@@ -1,91 +1,39 @@
-import { Link, useNavigate, useLocation } from "react-router-dom";
-import { useAuth } from "../contexts/AuthContext.jsx";
+import { useState } from "react";
+import { useLocation } from "react-router-dom";
+import { motion } from "framer-motion";
+import Sidebar from "./shell/Sidebar.jsx";
+import Topbar from "./shell/Topbar.jsx";
 
-// TODO: move to env var for production deployment
-const BACKEND_ORIGIN = "http://localhost:8000";
-
-function getNavItems(role) {
-  const dashboard = { to: "/dashboard", label: "Dashboard" };
-  const settings  = { to: "/settings", label: "Settings" };
-
-  if (role === "PATIENT") {
-    return [
-      dashboard,
-      { to: "/records", label: "Records" },
-      { to: "/emergency/manage", label: "Emergency" },
-      settings,
-    ];
-  }
-  if (role === "ADMIN" || role === "SUPERADMIN") {
-    return [
-      dashboard,
-      settings,
-      { href: `${BACKEND_ORIGIN}/admin/`, label: "Admin Panel", external: true },
-    ];
-  }
-  // DOCTOR, RESPONDER — sidebar items beyond Dashboard/Settings are not built yet
-  return [dashboard, settings];
-}
-
-export default function Layout({ children }) {
-  const { user, logout } = useAuth();
-  const navigate         = useNavigate();
-  const { pathname }     = useLocation();
-  const navItems         = getNavItems(user?.role);
-
-  const handleLogout = async () => {
-    await logout();
-    navigate("/login");
-  };
+export default function Layout({ children, breadcrumb }) {
+  const [collapsed, setCollapsed]   = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const location = useLocation();
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <nav className="bg-white border-b border-gray-200 h-14 sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full flex items-center justify-between">
-          <div className="flex items-center gap-6">
-            <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-lg bg-primary-600 flex items-center justify-center">
-                <span className="text-white text-xs font-bold">M</span>
-              </div>
-              <span className="font-semibold text-gray-900 text-sm">MediLocker</span>
-            </div>
-            <div className="hidden sm:flex items-center gap-1">
-              {navItems.map((item) =>
-                item.external ? (
-                  <a key={item.label} href={item.href} target="_blank" rel="noreferrer"
-                    className="px-3 py-1.5 rounded-lg text-sm font-medium text-gray-500 hover:text-gray-900 hover:bg-gray-100 transition-colors">
-                    {item.label} ↗
-                  </a>
-                ) : (
-                  <Link key={item.to} to={item.to}
-                    className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-                      pathname.startsWith(item.to)
-                        ? "bg-primary-50 text-primary-700"
-                        : "text-gray-500 hover:text-gray-900 hover:bg-gray-100"
-                    }`}>
-                    {item.label}
-                  </Link>
-                )
-              )}
-            </div>
-          </div>
-          <div className="flex items-center gap-4">
-            <span className="text-xs text-gray-400 hidden sm:block">{user?.email}</span>
-            {user?.role && user.role !== "PATIENT" && (
-              <span className="text-xs px-2 py-0.5 bg-gray-100 text-gray-600 rounded-full hidden sm:block capitalize">
-                {user.role.toLowerCase()}
-              </span>
-            )}
-            <button onClick={handleLogout}
-              className="text-sm text-gray-500 hover:text-gray-800 font-medium transition-colors">
-              Sign out
-            </button>
+    <div className="min-h-screen flex bg-bg">
+      <Sidebar collapsed={collapsed} onToggle={() => setCollapsed((c) => !c)} />
+
+      {mobileOpen && (
+        <div className="fixed inset-0 z-40 md:hidden">
+          <div className="absolute inset-0 bg-black/50" onClick={() => setMobileOpen(false)} />
+          <div className="absolute left-0 top-0 h-full w-56">
+            <Sidebar collapsed={false} onToggle={() => setMobileOpen(false)} />
           </div>
         </div>
-      </nav>
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {children}
-      </main>
+      )}
+
+      <div className="flex-1 flex flex-col min-w-0">
+        <Topbar onMenuClick={() => setMobileOpen(true)} breadcrumb={breadcrumb} />
+        <motion.main
+          key={location.pathname}
+          initial={{ opacity: 0, y: 4 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.18, ease: "easeOut" }}
+          className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8"
+        >
+          {children}
+        </motion.main>
+      </div>
     </div>
   );
 }

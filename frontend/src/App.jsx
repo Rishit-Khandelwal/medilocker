@@ -1,4 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { ThemeProvider }       from "./contexts/ThemeContext.jsx";
+import { ToastProvider }       from "./contexts/ToastContext.jsx";
 import { AuthProvider }        from "./contexts/AuthContext.jsx";
 import ProtectedRoute          from "./components/ProtectedRoute.jsx";
 import Login                   from "./pages/Login.jsx";
@@ -14,27 +16,28 @@ import Settings                from "./pages/Settings.jsx";
 
 export default function App() {
   return (
-    <BrowserRouter>
-      <AuthProvider>
-        <Routes>
-          {/* Public */}
-          <Route path="/login"              element={<Login />} />
-          <Route path="/register"           element={<Register />} />
-          <Route path="/emergency/:token"   element={<EmergencyPublic />} />
+    <ThemeProvider>
+      <ToastProvider>
+        <BrowserRouter>
+          <AuthProvider>
+            <Routes>
+              <Route path="/login"              element={<Login />} />
+              <Route path="/register"           element={<Register />} />
+              <Route path="/emergency/:token"   element={<EmergencyPublic />} />
 
-          {/* Protected */}
-          <Route path="/dashboard"            element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-          <Route path="/records"              element={<ProtectedRoute><Records /></ProtectedRoute>} />
-          <Route path="/records/upload"       element={<ProtectedRoute><Upload /></ProtectedRoute>} />
-          <Route path="/records/:id"          element={<ProtectedRoute><RecordDetail /></ProtectedRoute>} />
-          <Route path="/emergency/manage"     element={<ProtectedRoute><EmergencyManagement /></ProtectedRoute>} />
-          <Route path="/pending-verification" element={<ProtectedRoute><PendingVerification /></ProtectedRoute>} />
-          <Route path="/settings"             element={<ProtectedRoute><Settings /></ProtectedRoute>} />
+              <Route path="/dashboard"            element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+              <Route path="/records"              element={<ProtectedRoute><Records /></ProtectedRoute>} />
+              <Route path="/records/upload"       element={<ProtectedRoute><Upload /></ProtectedRoute>} />
+              <Route path="/records/:id"          element={<ProtectedRoute><RecordDetail /></ProtectedRoute>} />
+              <Route path="/emergency/manage"     element={<ProtectedRoute><EmergencyManagement /></ProtectedRoute>} />
+              <Route path="/pending-verification" element={<ProtectedRoute><PendingVerification /></ProtectedRoute>} />
+              <Route path="/settings"             element={<ProtectedRoute><Settings /></ProtectedRoute>} />
 
-          {/* Phase 5+: /timeline, /medications, /ai */}
-          <Route path="*" element={<Navigate to="/dashboard" replace />} />
-        </Routes>
-      </AuthProvider>
-    </BrowserRouter>
+              <Route path="*" element={<Navigate to="/dashboard" replace />} />
+            </Routes>
+          </AuthProvider>
+        </BrowserRouter>
+      </ToastProvider>
+    </ThemeProvider>
   );
 }

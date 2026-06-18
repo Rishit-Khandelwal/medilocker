@@ -1,7 +1,10 @@
 import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
+import { ArrowLeft, Download, Loader2, Trash2 } from "lucide-react";
 import api from "../api/axios";
 import Layout from "../components/Layout.jsx";
+import Card from "../components/ui/Card.jsx";
+import { useToast } from "../contexts/ToastContext.jsx";
 
 const CATEGORIES = [
   { value: "lab_report", label: "Lab Report" }, { value: "prescription", label: "Prescription" },
@@ -10,12 +13,13 @@ const CATEGORIES = [
   { value: "other", label: "Other" },
 ];
 
-const inputClass = "w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500";
+const input = "w-full bg-surface border border-border rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-accent focus:border-accent transition-colors";
 
 export default function RecordDetail() {
-  const { id }     = useParams();
-  const navigate   = useNavigate();
-  const blobUrl    = useRef(null);
+  const { id }   = useParams();
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  const blobUrl  = useRef(null);
 
   const [record, setRecord]     = useState(null);
   const [fileUrl, setFileUrl]   = useState(null);
@@ -32,7 +36,6 @@ export default function RecordDetail() {
         setRecord(data);
         setEditForm({ title: data.title, category: data.category, description: data.description, tags: data.tags });
 
-        // Fetch file as blob for authenticated preview
         const res = await api.get(`/records/${id}/download/`, { responseType: "blob" });
         const url = URL.createObjectURL(res.data);
         blobUrl.current = url;
@@ -43,8 +46,6 @@ export default function RecordDetail() {
         setLoading(false);
       }
     })();
-
-    // Cleanup blob URL on unmount
     return () => { if (blobUrl.current) URL.revokeObjectURL(blobUrl.current); };
   }, [id]);
 
@@ -54,8 +55,9 @@ export default function RecordDetail() {
       const { data } = await api.patch(`/records/${id}/`, editForm);
       setRecord(data);
       setEditing(false);
+      toast("Record updated.", "success");
     } catch {
-      alert("Update failed.");
+      toast("Update failed.", "error");
     } finally {
       setSaving(false);
     }
@@ -67,7 +69,7 @@ export default function RecordDetail() {
       await api.delete(`/records/${id}/`);
       navigate("/records");
     } catch {
-      alert("Delete failed.");
+      toast("Delete failed.", "error");
     }
   };
 
@@ -80,17 +82,17 @@ export default function RecordDetail() {
   };
 
   if (loading) return (
-    <Layout>
+    <Layout breadcrumb={["Records"]}>
       <div className="flex justify-center py-20">
-        <div className="h-8 w-8 rounded-full border-2 border-primary-600 border-t-transparent animate-spin" />
+        <Loader2 className="w-6 h-6 text-accent animate-spin" />
       </div>
     </Layout>
   );
 
   if (error) return (
-    <Layout>
-      <p className="text-red-600 text-sm">{error}</p>
-      <Link to="/records" className="text-primary-600 text-sm mt-2 inline-block">← Back to Records</Link>
+    <Layout breadcrumb={["Records"]}>
+      <p className="text-danger text-sm">{error}</p>
+      <Link to="/records" className="text-accent text-sm mt-2 inline-block hover:underline">← Back to Records</Link>
     </Layout>
   );
 
@@ -98,85 +100,69 @@ export default function RecordDetail() {
   const isImg = record.mime_type.startsWith("image/");
 
   return (
-    <Layout>
-      {/* Breadcrumb */}
-      <div className="flex items-center gap-2 text-sm text-gray-500 mb-6">
-        <Link to="/records" className="hover:text-gray-700">Records</Link>
-        <span>›</span>
-        <span className="text-gray-900 font-medium truncate">{record.title}</span>
+    <Layout breadcrumb={["Records", record.title]}>
+      <div className="flex items-center gap-2 mb-6">
+        <Link to="/records" className="text-muted hover:text-foreground"><ArrowLeft className="w-4 h-4" /></Link>
+        <span className="text-sm font-medium text-foreground truncate">{record.title}</span>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* File Preview */}
         <div className="lg:col-span-2">
-          <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-            <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
-              <span className="text-sm font-medium text-gray-700">{record.original_filename}</span>
-              <button onClick={handleDownload}
-                className="text-sm text-primary-600 hover:text-primary-700 font-medium">
-                ↓ Download
+          <Card padding="p-0" className="overflow-hidden">
+            <div className="px-4 py-3 border-b border-border flex items-center justify-between">
+              <span className="text-sm font-medium text-foreground truncate">{record.original_filename}</span>
+              <button onClick={handleDownload} className="flex items-center gap-1.5 text-sm text-accent hover:underline font-medium flex-shrink-0">
+                <Download className="w-3.5 h-3.5" /> Download
               </button>
             </div>
-            <div className="bg-gray-50 min-h-[400px] flex items-center justify-center">
-              {fileUrl && isPdf && (
-                <iframe src={fileUrl} className="w-full h-[500px]" title={record.title} />
-              )}
-              {fileUrl && isImg && (
-                <img src={fileUrl} alt={record.title}
-                  className="max-w-full max-h-[500px] object-contain p-4" />
-              )}
+            <div className="bg-bg min-h-[400px] flex items-center justify-center">
+              {fileUrl && isPdf && <iframe src={fileUrl} className="w-full h-[500px]" title={record.title} />}
+              {fileUrl && isImg && <img src={fileUrl} alt={record.title} className="max-w-full max-h-[500px] object-contain p-4" />}
               {!fileUrl && (
-                <div className="text-gray-400 text-center">
-                  <div className="text-4xl mb-2">⏳</div>
+                <div className="text-muted text-center">
+                  <Loader2 className="w-6 h-6 mx-auto mb-2 animate-spin" />
                   <p className="text-sm">Loading preview…</p>
                 </div>
               )}
             </div>
-          </div>
+          </Card>
         </div>
 
-        {/* Metadata Panel */}
         <div className="space-y-4">
-          <div className="bg-white rounded-xl border border-gray-200 p-5">
+          <Card>
             <div className="flex items-center justify-between mb-4">
-              <h2 className="font-semibold text-gray-900">Details</h2>
+              <h2 className="font-medium text-foreground text-sm">Details</h2>
               {!editing && (
-                <button onClick={() => setEditing(true)}
-                  className="text-xs text-primary-600 hover:text-primary-700 font-medium">Edit</button>
+                <button onClick={() => setEditing(true)} className="text-xs text-accent hover:underline font-medium">Edit</button>
               )}
             </div>
 
             {editing ? (
               <div className="space-y-3">
                 <div>
-                  <label className="block text-xs font-medium text-gray-600 mb-1">Title</label>
-                  <input className={inputClass} value={editForm.title}
-                    onChange={(e) => setEditForm({ ...editForm, title: e.target.value })} />
+                  <label className="block text-xs font-medium text-muted mb-1">Title</label>
+                  <input className={input} value={editForm.title} onChange={(e) => setEditForm({ ...editForm, title: e.target.value })} />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-gray-600 mb-1">Category</label>
-                  <select className={inputClass} value={editForm.category}
-                    onChange={(e) => setEditForm({ ...editForm, category: e.target.value })}>
+                  <label className="block text-xs font-medium text-muted mb-1">Category</label>
+                  <select className={input} value={editForm.category} onChange={(e) => setEditForm({ ...editForm, category: e.target.value })}>
                     {CATEGORIES.map(({ value, label }) => <option key={value} value={value}>{label}</option>)}
                   </select>
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-gray-600 mb-1">Description</label>
-                  <textarea rows={3} className={inputClass} value={editForm.description}
-                    onChange={(e) => setEditForm({ ...editForm, description: e.target.value })} />
+                  <label className="block text-xs font-medium text-muted mb-1">Description</label>
+                  <textarea rows={3} className={input} value={editForm.description} onChange={(e) => setEditForm({ ...editForm, description: e.target.value })} />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-gray-600 mb-1">Tags</label>
-                  <input className={inputClass} value={editForm.tags}
-                    onChange={(e) => setEditForm({ ...editForm, tags: e.target.value })} />
+                  <label className="block text-xs font-medium text-muted mb-1">Tags</label>
+                  <input className={input} value={editForm.tags} onChange={(e) => setEditForm({ ...editForm, tags: e.target.value })} />
                 </div>
                 <div className="flex gap-2 pt-1">
                   <button onClick={handleSave} disabled={saving}
-                    className="flex-1 py-2 rounded-lg bg-primary-600 text-white text-xs font-medium hover:bg-primary-700 disabled:opacity-50">
+                    className="flex-1 py-2 rounded-lg bg-accent text-white text-xs font-medium hover:bg-accent/90 disabled:opacity-50">
                     {saving ? "Saving…" : "Save"}
                   </button>
-                  <button onClick={() => setEditing(false)}
-                    className="flex-1 py-2 rounded-lg border border-gray-300 text-xs text-gray-600 hover:bg-gray-50">
+                  <button onClick={() => setEditing(false)} className="flex-1 py-2 rounded-lg border border-border text-xs text-muted hover:bg-bg">
                     Cancel
                   </button>
                 </div>
@@ -191,21 +177,21 @@ export default function RecordDetail() {
                 {record.description && <Row label="Notes" value={record.description} />}
                 {record.tags_list?.length > 0 && (
                   <div>
-                    <dt className="text-xs text-gray-400 mb-1">Tags</dt>
+                    <dt className="text-xs text-muted mb-1">Tags</dt>
                     <dd className="flex flex-wrap gap-1">
                       {record.tags_list.map((t) => (
-                        <span key={t} className="text-xs px-1.5 py-0.5 bg-primary-50 text-primary-700 rounded">{t}</span>
+                        <span key={t} className="text-xs px-1.5 py-0.5 bg-accent/10 text-accent rounded">{t}</span>
                       ))}
                     </dd>
                   </div>
                 )}
               </dl>
             )}
-          </div>
+          </Card>
 
           <button onClick={handleDelete}
-            className="w-full py-2.5 rounded-lg border border-red-200 text-red-600 text-sm font-medium hover:bg-red-50 transition-colors">
-            Delete record
+            className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-lg border border-danger/30 text-danger text-sm font-medium hover:bg-danger/5 transition-colors">
+            <Trash2 className="w-3.5 h-3.5" /> Delete record
           </button>
         </div>
       </div>
@@ -216,8 +202,8 @@ export default function RecordDetail() {
 function Row({ label, value }) {
   return (
     <div>
-      <dt className="text-xs text-gray-400">{label}</dt>
-      <dd className="text-gray-800 mt-0.5">{value}</dd>
+      <dt className="text-xs text-muted">{label}</dt>
+      <dd className="text-foreground mt-0.5">{value}</dd>
     </div>
   );
 }

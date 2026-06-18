@@ -2,23 +2,23 @@ import { useState, useEffect } from "react";
 import { useAuth } from "../contexts/AuthContext.jsx";
 import api from "../api/axios.js";
 import Layout from "../components/Layout.jsx";
+import Card from "../components/ui/Card.jsx";
+import { useToast } from "../contexts/ToastContext.jsx";
 
 const BLOOD_GROUPS = ["", "A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
-const inputCls = "w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500";
+const input = "w-full bg-surface border border-border rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-accent focus:border-accent transition-colors";
 
 export default function Settings() {
   const { user } = useAuth();
-  const [profile, setProfile] = useState(null);
+  const { toast } = useToast();
   const [form, setForm]       = useState(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving]   = useState(false);
-  const [saved, setSaved]     = useState(false);
   const [error, setError]     = useState("");
 
   useEffect(() => {
     api.get("/auth/profile/")
       .then(({ data }) => {
-        setProfile(data);
         setForm({
           date_of_birth: data.date_of_birth || "",
           blood_group:   data.blood_group   || "",
@@ -38,12 +38,9 @@ export default function Settings() {
     e.preventDefault();
     setSaving(true);
     setError("");
-    setSaved(false);
     try {
-      const { data } = await api.patch("/auth/profile/", form);
-      setProfile(data);
-      setSaved(true);
-      setTimeout(() => setSaved(false), 2500);
+      await api.patch("/auth/profile/", form);
+      toast("Settings saved.", "success");
     } catch {
       setError("Failed to save changes.");
     } finally {
@@ -52,76 +49,69 @@ export default function Settings() {
   };
 
   if (loading) return (
-    <Layout>
+    <Layout breadcrumb={["Settings"]}>
       <div className="flex justify-center py-20">
-        <div className="h-8 w-8 rounded-full border-2 border-primary-600 border-t-transparent animate-spin" />
+        <div className="h-7 w-7 rounded-full border-2 border-accent border-t-transparent animate-spin" />
       </div>
     </Layout>
   );
 
   return (
-    <Layout>
+    <Layout breadcrumb={["Settings"]}>
       <div className="max-w-2xl">
-        <h1 className="text-xl font-bold text-gray-900 mb-1">Settings</h1>
-        <p className="text-sm text-gray-500 mb-6">Manage your account and health profile</p>
+        <h1 className="text-xl font-semibold text-foreground mb-1">Settings</h1>
+        <p className="text-sm text-muted mb-6">Manage your account and health profile</p>
 
-        {/* Account info — read-only */}
-        <div className="bg-white rounded-xl border border-gray-200 p-5 mb-5">
-          <h3 className="font-semibold text-gray-900 text-sm mb-3">Account</h3>
+        <Card className="mb-5">
+          <h3 className="font-medium text-foreground text-sm mb-3">Account</h3>
           <dl className="space-y-2 text-sm">
             <Row label="Email" value={user?.email} />
             <Row label="Username" value={user?.username} />
-            <Row label="Role" value={
-              <span className="capitalize">{user?.role?.toLowerCase()}</span>
-            } />
-            {user?.role !== "PATIENT" && (
-              <Row label="Verified" value={user?.is_verified ? "✅ Yes" : "⏳ Pending"} />
-            )}
+            <Row label="Role" value={<span className="capitalize">{user?.role?.toLowerCase()}</span>} />
+            {user?.role !== "PATIENT" && <Row label="Verified" value={user?.is_verified ? "Yes" : "Pending"} />}
           </dl>
-        </div>
+        </Card>
 
-        {/* Health profile — editable */}
-        <form onSubmit={handleSave} className="bg-white rounded-xl border border-gray-200 p-5 space-y-4">
-          <h3 className="font-semibold text-gray-900 text-sm mb-1">Health Profile</h3>
+        <Card as="form" onSubmit={handleSave} className="space-y-4">
+          <h3 className="font-medium text-foreground text-sm mb-1">Health Profile</h3>
 
-          {error && <p className="text-red-600 text-sm">{error}</p>}
-          {saved && <p className="text-green-600 text-sm">Saved ✓</p>}
+          {error && <p className="text-danger text-sm">{error}</p>}
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">Date of birth</label>
-              <input type="date" value={form.date_of_birth} onChange={set("date_of_birth")} className={inputCls} />
+              <label className="block text-xs font-medium text-foreground mb-1">Date of birth</label>
+              <input type="date" value={form.date_of_birth} onChange={set("date_of_birth")} className={input} />
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">Blood group</label>
-              <select value={form.blood_group} onChange={set("blood_group")} className={inputCls}>
+              <label className="block text-xs font-medium text-foreground mb-1">Blood group</label>
+              <select value={form.blood_group} onChange={set("blood_group")} className={input}>
                 {BLOOD_GROUPS.map((g) => <option key={g} value={g}>{g || "—"}</option>)}
               </select>
             </div>
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-gray-700 mb-1">Phone</label>
-            <input value={form.phone} onChange={set("phone")} className={inputCls} />
+            <label className="block text-xs font-medium text-foreground mb-1">Phone</label>
+            <input value={form.phone} onChange={set("phone")} className={input} />
           </div>
           <div>
-            <label className="block text-xs font-medium text-gray-700 mb-1">Allergies</label>
-            <textarea rows={2} value={form.allergies} onChange={set("allergies")} className={inputCls} placeholder="Comma-separated" />
+            <label className="block text-xs font-medium text-foreground mb-1">Allergies</label>
+            <textarea rows={2} value={form.allergies} onChange={set("allergies")} className={input} placeholder="Comma-separated" />
           </div>
           <div>
-            <label className="block text-xs font-medium text-gray-700 mb-1">Conditions</label>
-            <textarea rows={2} value={form.conditions} onChange={set("conditions")} className={inputCls} />
+            <label className="block text-xs font-medium text-foreground mb-1">Conditions</label>
+            <textarea rows={2} value={form.conditions} onChange={set("conditions")} className={input} />
           </div>
           <div>
-            <label className="block text-xs font-medium text-gray-700 mb-1">Medications</label>
-            <textarea rows={2} value={form.medications} onChange={set("medications")} className={inputCls} />
+            <label className="block text-xs font-medium text-foreground mb-1">Medications</label>
+            <textarea rows={2} value={form.medications} onChange={set("medications")} className={input} />
           </div>
 
           <button type="submit" disabled={saving}
-            className="px-4 py-2 bg-primary-600 text-white text-sm font-medium rounded-lg hover:bg-primary-700 disabled:opacity-50">
+            className="px-4 py-2 bg-accent text-white text-sm font-medium rounded-lg hover:bg-accent/90 disabled:opacity-50">
             {saving ? "Saving…" : "Save changes"}
           </button>
-        </form>
+        </Card>
       </div>
     </Layout>
   );
@@ -129,9 +119,9 @@ export default function Settings() {
 
 function Row({ label, value }) {
   return (
-    <div className="flex justify-between border-b border-gray-50 last:border-0 pb-2">
-      <dt className="text-gray-400">{label}</dt>
-      <dd className="text-gray-800 font-medium">{value}</dd>
+    <div className="flex justify-between border-b border-border last:border-0 pb-2">
+      <dt className="text-muted">{label}</dt>
+      <dd className="text-foreground font-medium">{value}</dd>
     </div>
   );
 }

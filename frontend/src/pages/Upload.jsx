@@ -1,7 +1,9 @@
 import { useState, useRef } from "react";
 import { useNavigate, Link } from "react-router-dom";
+import { ArrowLeft, UploadCloud, CheckCircle2 } from "lucide-react";
 import api from "../api/axios";
 import Layout from "../components/Layout.jsx";
+import Card from "../components/ui/Card.jsx";
 
 const CATEGORIES = [
   { value: "lab_report",   label: "Lab Report" },
@@ -14,6 +16,7 @@ const CATEGORIES = [
 ];
 
 const ACCEPTED = ".pdf,.png,.jpeg,.jpg";
+const input = "w-full bg-surface border border-border rounded-lg px-3 py-2 text-sm text-foreground placeholder:text-muted focus:outline-none focus:ring-1 focus:ring-accent focus:border-accent transition-colors";
 
 export default function Upload() {
   const [file, setFile]         = useState(null);
@@ -23,17 +26,14 @@ export default function Upload() {
   const [error, setError]       = useState("");
   const [loading, setLoading]   = useState(false);
   const inputRef = useRef(null);
-  const navigate = useNavigate();
+  const navigate  = useNavigate();
 
   const set = (k) => (e) => setForm({ ...form, [k]: e.target.value });
 
   const handleFileSelect = (selected) => {
     if (!selected) return;
     setFile(selected);
-    if (!form.title) {
-      // Auto-fill title from filename (strip extension)
-      setForm((f) => ({ ...f, title: selected.name.replace(/\.[^.]+$/, "") }));
-    }
+    if (!form.title) setForm((f) => ({ ...f, title: selected.name.replace(/\.[^.]+$/, "") }));
     setError("");
   };
 
@@ -60,8 +60,7 @@ export default function Upload() {
     try {
       await api.post("/records/", fd, {
         headers: { "Content-Type": "multipart/form-data" },
-        onUploadProgress: (e) =>
-          setProgress(e.total ? Math.round((e.loaded * 100) / e.total) : 0),
+        onUploadProgress: (e) => setProgress(e.total ? Math.round((e.loaded * 100) / e.total) : 0),
       });
       navigate("/records");
     } catch (err) {
@@ -75,107 +74,86 @@ export default function Upload() {
     }
   };
 
-  const inputClass = "w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500";
-
   return (
-    <Layout>
+    <Layout breadcrumb={["Records", "Upload"]}>
       <div className="max-w-2xl">
-        <div className="flex items-center gap-3 mb-6">
-          <Link to="/records" className="text-sm text-gray-500 hover:text-gray-700">← Records</Link>
-          <span className="text-gray-300">/</span>
-          <h1 className="text-xl font-bold text-gray-900">Upload Record</h1>
+        <div className="flex items-center gap-2 mb-6">
+          <Link to="/records" className="text-muted hover:text-foreground"><ArrowLeft className="w-4 h-4" /></Link>
+          <h1 className="text-xl font-semibold text-foreground">Upload Record</h1>
         </div>
 
-        <form onSubmit={submit} className="space-y-5">
-          {/* Drop zone */}
+        <Card as="form" onSubmit={submit} className="space-y-5">
           <div
             onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
             onDragLeave={() => setDragging(false)}
             onDrop={onDrop}
             onClick={() => inputRef.current?.click()}
             className={`relative border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-colors ${
-              dragging
-                ? "border-primary-500 bg-primary-50"
-                : file
-                ? "border-green-400 bg-green-50"
-                : "border-gray-300 hover:border-primary-400 hover:bg-gray-50"
+              dragging ? "border-accent bg-accent/5" : file ? "border-success bg-success/5" : "border-border hover:border-muted"
             }`}>
             <input ref={inputRef} type="file" accept={ACCEPTED} className="hidden"
               onChange={(e) => handleFileSelect(e.target.files[0])} />
-
             {file ? (
-              <div className="space-y-1">
-                <div className="text-2xl">✅</div>
-                <p className="font-medium text-gray-800 text-sm">{file.name}</p>
-                <p className="text-xs text-gray-500">
-                  {(file.size / 1024 / 1024).toFixed(2)} MB · Click to change
-                </p>
+              <div>
+                <CheckCircle2 className="w-6 h-6 text-success mx-auto mb-1" />
+                <p className="font-medium text-foreground text-sm">{file.name}</p>
+                <p className="text-xs text-muted">{(file.size / 1024 / 1024).toFixed(2)} MB · Click to change</p>
               </div>
             ) : (
-              <div className="space-y-2">
-                <div className="text-3xl">📂</div>
-                <p className="font-medium text-gray-700 text-sm">
-                  Drag &amp; drop or <span className="text-primary-600">browse</span>
-                </p>
-                <p className="text-xs text-gray-400">PDF, PNG, JPEG · Max 20 MB</p>
+              <div>
+                <UploadCloud className="w-7 h-7 text-muted mx-auto mb-1" />
+                <p className="font-medium text-foreground text-sm">Drag &amp; drop or <span className="text-accent">browse</span></p>
+                <p className="text-xs text-muted">PDF, PNG, JPEG · Max 20 MB</p>
               </div>
             )}
           </div>
 
-          {/* Fields */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Title <span className="text-red-400">*</span></label>
-            <input type="text" required value={form.title} onChange={set("title")} className={inputClass} />
+            <label className="block text-sm font-medium text-foreground mb-1">Title <span className="text-danger">*</span></label>
+            <input type="text" required value={form.title} onChange={set("title")} className={input} />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
-            <select value={form.category} onChange={set("category")} className={inputClass}>
-              {CATEGORIES.map(({ value, label }) => (
-                <option key={value} value={value}>{label}</option>
-              ))}
+            <label className="block text-sm font-medium text-foreground mb-1">Category</label>
+            <select value={form.category} onChange={set("category")} className={input}>
+              {CATEGORIES.map(({ value, label }) => <option key={value} value={value}>{label}</option>)}
             </select>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
-            <textarea rows={3} value={form.description} onChange={set("description")} className={inputClass}
+            <label className="block text-sm font-medium text-foreground mb-1">Description</label>
+            <textarea rows={3} value={form.description} onChange={set("description")} className={input}
               placeholder="Optional notes about this record" />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Tags</label>
-            <input type="text" value={form.tags} onChange={set("tags")} className={inputClass}
+            <label className="block text-sm font-medium text-foreground mb-1">Tags</label>
+            <input type="text" value={form.tags} onChange={set("tags")} className={input}
               placeholder="e.g. blood test, 2026, dr. sharma" />
-            <p className="text-xs text-gray-400 mt-1">Comma-separated — used for search in Phase 7</p>
+            <p className="text-xs text-muted mt-1">Comma-separated — used for search in Phase 7</p>
           </div>
 
-          {error && (
-            <div className="p-3 rounded-lg bg-red-50 border border-red-100 text-red-700 text-sm">{error}</div>
-          )}
+          {error && <div className="p-3 rounded-lg bg-danger/10 border border-danger/20 text-danger text-sm">{error}</div>}
 
-          {/* Progress */}
           {loading && (
             <div className="space-y-1">
-              <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-                <div className="h-full bg-primary-600 transition-all duration-300 rounded-full"
-                  style={{ width: `${progress}%` }} />
+              <div className="h-1.5 bg-bg rounded-full overflow-hidden">
+                <div className="h-full bg-accent transition-all duration-300 rounded-full" style={{ width: `${progress}%` }} />
               </div>
-              <p className="text-xs text-gray-500 text-center">{progress}%</p>
+              <p className="text-xs text-muted text-center">{progress}%</p>
             </div>
           )}
 
           <div className="flex gap-3">
             <button type="submit" disabled={loading || !file}
-              className="flex-1 py-2.5 rounded-lg bg-primary-600 text-white text-sm font-medium hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+              className="flex-1 py-2.5 rounded-lg bg-accent text-white text-sm font-medium hover:bg-accent/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
               {loading ? "Uploading…" : "Upload Record"}
             </button>
-            <Link to="/records"
-              className="px-4 py-2.5 rounded-lg border border-gray-300 text-sm text-gray-600 hover:bg-gray-50 transition-colors">
+            <Link to="/records" className="px-4 py-2.5 rounded-lg border border-border text-sm text-muted hover:bg-bg transition-colors">
               Cancel
             </Link>
           </div>
-        </form>
+        </Card>
       </div>
     </Layout>
   );

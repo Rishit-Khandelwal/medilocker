@@ -28,8 +28,8 @@ INSTALLED_APPS = [
     "apps.records",      
     "apps.audit",        
     "apps.emergency",    
-    # "apps.timeline",     # Phase 5
-    # "apps.notifications",# Phase 6
+    "apps.timeline",     
+    # "apps.notifications",# Pshase 6
     # "apps.rag",          # Phase 7
     # "apps.ai_assistant", # Phase 8
 ]

@@ -13,6 +13,9 @@ import EmergencyManagement     from "./pages/EmergencyManagement.jsx";
 import EmergencyPublic         from "./pages/EmergencyPublic.jsx";
 import PendingVerification     from "./pages/PendingVerification.jsx";
 import Settings                from "./pages/Settings.jsx";
+import Timeline                from "./pages/Timeline.jsx";
+import Appointments            from "./pages/Appointments.jsx";
+import Medications             from "./pages/Medications.jsx";
 
 export default function App() {
   return (
@@ -21,10 +24,12 @@ export default function App() {
         <BrowserRouter>
           <AuthProvider>
             <Routes>
-              <Route path="/login"              element={<Login />} />
-              <Route path="/register"           element={<Register />} />
-              <Route path="/emergency/:token"   element={<EmergencyPublic />} />
+              {/* Public */}
+              <Route path="/login"            element={<Login />} />
+              <Route path="/register"         element={<Register />} />
+              <Route path="/emergency/:token" element={<EmergencyPublic />} />
 
+              {/* Protected */}
               <Route path="/dashboard"            element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
               <Route path="/records"              element={<ProtectedRoute><Records /></ProtectedRoute>} />
               <Route path="/records/upload"       element={<ProtectedRoute><Upload /></ProtectedRoute>} />
@@ -32,6 +37,10 @@ export default function App() {
               <Route path="/emergency/manage"     element={<ProtectedRoute><EmergencyManagement /></ProtectedRoute>} />
               <Route path="/pending-verification" element={<ProtectedRoute><PendingVerification /></ProtectedRoute>} />
               <Route path="/settings"             element={<ProtectedRoute><Settings /></ProtectedRoute>} />
+              {/* Phase 5 */}
+              <Route path="/timeline"             element={<ProtectedRoute><Timeline /></ProtectedRoute>} />
+              <Route path="/appointments"         element={<ProtectedRoute><Appointments /></ProtectedRoute>} />
+              <Route path="/medications"          element={<ProtectedRoute><Medications /></ProtectedRoute>} />
 
               <Route path="*" element={<Navigate to="/dashboard" replace />} />
             </Routes>

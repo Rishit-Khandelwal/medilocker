@@ -1,9 +1,9 @@
 import { Link, useLocation } from "react-router-dom";
 import {
   LayoutDashboard, FileText, ShieldAlert, Settings as SettingsIcon,
-  ChevronLeft, ChevronRight, Stethoscope, Siren, Users, Calendar, Pill,
+  ChevronLeft, ChevronRight, Siren, Users, Calendar, Pill,
   MessageSquare, BarChart3, ScanLine, History, Building2, CreditCard,
-  Cpu, Flag, Database, ExternalLink,
+  Cpu, Flag, Database, ExternalLink, Search, Sparkles,
 } from "lucide-react";
 import { useAuth } from "../../contexts/AuthContext.jsx";
 
@@ -11,48 +11,50 @@ const BACKEND_ORIGIN = "http://localhost:8000";
 
 const NAV_BY_ROLE = {
   PATIENT: [
-    { label: "Dashboard",    to: "/dashboard",          icon: LayoutDashboard },
-    { label: "Records",      to: "/records",            icon: FileText },
-    { label: "Timeline",     to: "/timeline",           icon: History },
-    { label: "Appointments", to: "/appointments",       icon: Calendar },
-    { label: "Medications",  to: "/medications",        icon: Pill },
-    { label: "Emergency",    to: "/emergency/manage",   icon: ShieldAlert },
-    { label: "Insurance",    icon: Building2,           soon: true },
-    { label: "Family Vault", icon: Users,               soon: true },
-    { label: "AI Copilot",   icon: Cpu,                 soon: true },
-    { label: "Settings",     to: "/settings",           icon: SettingsIcon },
+    { label: "Dashboard",     to: "/dashboard",        icon: LayoutDashboard },
+    { label: "Records",       to: "/records",          icon: FileText },
+    { label: "Search",        to: "/search",           icon: Search },
+    { label: "Timeline",      to: "/timeline",         icon: History },
+    { label: "Appointments",  to: "/appointments",     icon: Calendar },
+    { label: "Medications",   to: "/medications",      icon: Pill },
+    { label: "Emergency",     to: "/emergency/manage", icon: ShieldAlert },
+    { label: "AI Copilot",    to: "/ai",               icon: Sparkles },   // Phase 8 live
+    { label: "Insurance",     icon: Building2,         soon: true },
+    { label: "Family Vault",  icon: Users,             soon: true },
+    { label: "Settings",      to: "/settings",         icon: SettingsIcon },
   ],
   DOCTOR: [
-    { label: "Dashboard",    to: "/dashboard",          icon: LayoutDashboard },
-    { label: "Patients",     icon: Users,               soon: true },
-    { label: "Appointments", icon: Calendar,            soon: true },
-    { label: "Prescriptions",icon: Pill,                soon: true },
-    { label: "Messages",     icon: MessageSquare,       soon: true },
-    { label: "Analytics",    icon: BarChart3,           soon: true },
-    { label: "Settings",     to: "/settings",           icon: SettingsIcon },
+    { label: "Dashboard",     to: "/dashboard",        icon: LayoutDashboard },
+    { label: "AI Assistant",  to: "/ai",               icon: Sparkles },   // Phase 8 live
+    { label: "Patients",      icon: Users,             soon: true },
+    { label: "Appointments",  icon: Calendar,          soon: true },
+    { label: "Prescriptions", icon: Pill,              soon: true },
+    { label: "Messages",      icon: MessageSquare,     soon: true },
+    { label: "Analytics",     icon: BarChart3,         soon: true },
+    { label: "Settings",      to: "/settings",         icon: SettingsIcon },
   ],
   RESPONDER: [
-    { label: "Dashboard",    to: "/dashboard",          icon: LayoutDashboard },
-    { label: "Scan QR",      icon: ScanLine,            soon: true },
-    { label: "Access History",icon: History,            soon: true },
-    { label: "Active Cases", icon: Siren,               soon: true },
-    { label: "Settings",     to: "/settings",           icon: SettingsIcon },
+    { label: "Dashboard",     to: "/dashboard",        icon: LayoutDashboard },
+    { label: "Scan QR",       icon: ScanLine,          soon: true },
+    { label: "Access History",icon: History,           soon: true },
+    { label: "Active Cases",  icon: Siren,             soon: true },
+    { label: "Settings",      to: "/settings",         icon: SettingsIcon },
   ],
   ADMIN: [
-    { label: "Dashboard",    to: "/dashboard",          icon: LayoutDashboard },
-    { label: "Admin Panel",  href: `${BACKEND_ORIGIN}/admin/`, icon: Database, external: true },
-    { label: "Analytics",    icon: BarChart3,           soon: true },
-    { label: "Security",     icon: ShieldAlert,         soon: true },
-    { label: "Settings",     to: "/settings",           icon: SettingsIcon },
+    { label: "Dashboard",     to: "/dashboard",        icon: LayoutDashboard },
+    { label: "Admin Panel",   href: `${BACKEND_ORIGIN}/admin/`, icon: Database, external: true },
+    { label: "Analytics",     icon: BarChart3,         soon: true },
+    { label: "Security",      icon: ShieldAlert,       soon: true },
+    { label: "Settings",      to: "/settings",         icon: SettingsIcon },
   ],
   SUPERADMIN: [
-    { label: "Dashboard",    to: "/dashboard",          icon: LayoutDashboard },
-    { label: "Admin Panel",  href: `${BACKEND_ORIGIN}/admin/`, icon: Database, external: true },
-    { label: "Organizations",icon: Building2,           soon: true },
-    { label: "Billing",      icon: CreditCard,          soon: true },
-    { label: "AI Models",    icon: Cpu,                 soon: true },
-    { label: "Feature Flags",icon: Flag,                soon: true },
-    { label: "Settings",     to: "/settings",           icon: SettingsIcon },
+    { label: "Dashboard",     to: "/dashboard",        icon: LayoutDashboard },
+    { label: "Admin Panel",   href: `${BACKEND_ORIGIN}/admin/`, icon: Database, external: true },
+    { label: "Organizations", icon: Building2,         soon: true },
+    { label: "Billing",       icon: CreditCard,        soon: true },
+    { label: "AI Models",     icon: Cpu,               soon: true },
+    { label: "Feature Flags", icon: Flag,              soon: true },
+    { label: "Settings",      to: "/settings",         icon: SettingsIcon },
   ],
 };
 
@@ -73,7 +75,7 @@ export default function Sidebar({ collapsed, onToggle }) {
       <nav className="flex-1 px-2 py-3 space-y-0.5 overflow-y-auto">
         {items.map((item) => {
           const Icon   = item.icon;
-          const active = item.to && pathname.startsWith(item.to);
+          const active = item.to && (pathname === item.to || pathname.startsWith(item.to + "/"));
 
           if (item.external) return (
             <a key={item.label} href={item.href} target="_blank" rel="noreferrer"

@@ -1,6 +1,7 @@
 from pathlib import Path
 from datetime import timedelta
 from decouple import config
+from celery.schedules import crontab
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -11,6 +12,7 @@ ALLOWED_HOSTS = config("ALLOWED_HOSTS", default="localhost").split(",")
 AUTH_USER_MODEL = "accounts.User"
 
 INSTALLED_APPS = [
+    "daphne",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -23,15 +25,16 @@ INSTALLED_APPS = [
     "rest_framework_simplejwt.token_blacklist",
     "corsheaders",
     "django_filters",
+    "channels",
     # local — add new phases here
     "apps.accounts",
     "apps.records",      
     "apps.audit",        
     "apps.emergency",    
     "apps.timeline",     
-    # "apps.notifications",# Pshase 6
-    # "apps.rag",          # Phase 7
-    # "apps.ai_assistant", # Phase 8
+    "apps.notifications",# Pshase 6
+    "apps.rag",          # Phase 7
+    "apps.ai_assistant", # Phase 8
 ]
 
 MIDDLEWARE = [
@@ -144,3 +147,45 @@ CORS_ALLOW_CREDENTIALS = True
 #     "default": {"BACKEND": "channels_redis.core.RedisChannelLayer",
 #                 "CONFIG": {"hosts": [("127.0.0.1", 6379)]}}
 # }
+
+# ── Phase 6: Channels / WebSocket ─────────────────────────────────────────────
+ASGI_APPLICATION = "config.asgi.application"
+
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {
+            "hosts": [(config("REDIS_HOST", default="localhost"),
+                       config("REDIS_PORT", default=6379, cast=int))],
+        },
+    },
+}
+
+# ── Phase 6: Celery ────────────────────────────────────────────────────────────
+CELERY_BROKER_URL      = config("CELERY_BROKER_URL", default="redis://localhost:6379/0")
+CELERY_RESULT_BACKEND  = config("CELERY_RESULT_BACKEND", default="redis://localhost:6379/0")
+CELERY_ACCEPT_CONTENT  = ["json"]
+CELERY_TASK_SERIALIZER = "json"
+CELERY_TIMEZONE        = "UTC"
+
+CELERY_BEAT_SCHEDULE = {
+    "check-appointment-reminders": {
+        "task":     "apps.notifications.tasks.check_appointment_reminders",
+        "schedule": 900.0,  # every 15 minutes
+    },
+    "check-medicine-reminders": {
+        "task":     "apps.notifications.tasks.check_medicine_reminders",
+        "schedule": crontab(hour=8, minute=0),  # daily, 08:00 UTC
+    },
+}
+
+# ── Phase 7: OCR / RAG ────────────────────────────────────────────────────────
+QDRANT_HOST  = config("QDRANT_HOST",  default="localhost")
+QDRANT_PORT  = config("QDRANT_PORT",  default=6333, cast=int)
+TESSERACT_CMD = config("TESSERACT_CMD", default="")
+
+# ── Phase 8: AI Assistant ─────────────────────────────────────────────────────
+GEMINI_API_KEY  = config("GEMINI_API_KEY",  default="")
+OLLAMA_BASE_URL = config("OLLAMA_BASE_URL", default="http://localhost:11434")
+OLLAMA_MODEL    = config("OLLAMA_MODEL",    default="llama3.2:3b")
+AI_PROVIDER     = config("AI_PROVIDER",     default="auto")   # auto | ollama | gemini

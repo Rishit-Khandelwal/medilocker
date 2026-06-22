@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { FileText, Phone, QrCode, Droplet, Calendar, Pill, FileQuestion, Users, Sparkles, Bell, History, Plus } from "lucide-react";
+import { FileText, Phone, Droplet, Calendar, Pill, FileQuestion, Users, Sparkles, History, Plus } from "lucide-react";
 import { useAuth } from "../../contexts/AuthContext.jsx";
 import api from "../../api/axios.js";
 import Card from "../../components/ui/Card.jsx";
@@ -11,12 +11,12 @@ import { Skeleton } from "../../components/ui/Skeleton.jsx";
 
 export default function PatientDashboard() {
   const { user } = useAuth();
-  const [records,    setRecords]    = useState({ total: 0, by_category: {} });
-  const [recent,     setRecent]     = useState([]);
-  const [profile,    setProfile]    = useState(null);
-  const [contacts,   setContacts]   = useState([]);
-  const [tlStats,    setTlStats]    = useState(null);
-  const [loading,    setLoading]    = useState(true);
+  const [records,  setRecords]  = useState({ total: 0, by_category: {} });
+  const [recent,   setRecent]   = useState([]);
+  const [profile,  setProfile]  = useState(null);
+  const [contacts, setContacts] = useState([]);
+  const [tlStats,  setTlStats]  = useState(null);
+  const [loading,  setLoading]  = useState(true);
 
   useEffect(() => {
     Promise.allSettled([
@@ -45,17 +45,14 @@ export default function PatientDashboard() {
         <p className="text-sm text-muted mt-0.5">Your personal health vault</p>
       </div>
 
-      {/* Stat row */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <StatCard icon={FileText}  label="Records"      value={records.total}              to="/records"            loading={loading} accent />
-        <StatCard icon={Calendar}  label="Appointments" value={tlStats?.total_appointments} to="/appointments"       loading={loading} />
-        <StatCard icon={Pill}      label="Medications"  value={tlStats?.active_medications} to="/medications"        loading={loading} />
-        <StatCard icon={Phone}     label="Emergency Contacts" value={contacts.length}       to="/emergency/manage"   loading={loading} />
+        <StatCard icon={FileText} label="Records"      value={records.total}              to="/records"          loading={loading} accent />
+        <StatCard icon={Calendar} label="Appointments" value={tlStats?.total_appointments} to="/appointments"     loading={loading} />
+        <StatCard icon={Pill}     label="Medications"  value={tlStats?.active_medications} to="/medications"      loading={loading} />
+        <StatCard icon={Phone}    label="Emergency Contacts" value={contacts.length}       to="/emergency/manage" loading={loading} />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-5">
-
-        {/* Upcoming appointments */}
         <Card>
           <div className="flex items-center justify-between mb-3">
             <h3 className="font-medium text-foreground text-sm">Upcoming Appointments</h3>
@@ -63,7 +60,7 @@ export default function PatientDashboard() {
           </div>
           {loading ? (
             <div className="space-y-2"><Skeleton className="h-10 w-full" /><Skeleton className="h-10 w-full" /></div>
-          ) : tlStats?.upcoming?.length === 0 || !tlStats?.upcoming ? (
+          ) : !tlStats?.upcoming?.length ? (
             <EmptyState icon={Calendar} title="No upcoming appointments"
               action={<Link to="/appointments" className="text-xs text-accent hover:underline font-medium flex items-center gap-1"><Plus className="w-3 h-3" /> Add appointment</Link>} />
           ) : (
@@ -90,7 +87,6 @@ export default function PatientDashboard() {
           )}
         </Card>
 
-        {/* Recent Records */}
         <Card>
           <div className="flex items-center justify-between mb-3">
             <h3 className="font-medium text-foreground text-sm">Recent Records</h3>
@@ -113,7 +109,6 @@ export default function PatientDashboard() {
         </Card>
       </div>
 
-      {/* Health overview */}
       <Card className="mb-5">
         <div className="flex items-center justify-between mb-3">
           <h3 className="font-medium text-foreground text-sm">Health Overview</h3>
@@ -142,12 +137,10 @@ export default function PatientDashboard() {
         )}
       </Card>
 
-      {/* Coming soon */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <ComingSoonCard icon={History}  title="Insurance Policies &amp; Claims" note="Future" />
-        <ComingSoonCard icon={Users}    title="Family Vault"     note="Future" />
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <ComingSoonCard icon={History}  title="Insurance Policies & Claims" note="Future" />
+        <ComingSoonCard icon={Users}    title="Family Vault" note="Future" />
         <ComingSoonCard icon={Sparkles} title="AI Health Copilot" note="Phase 8" />
-        <ComingSoonCard icon={Bell}     title="Notifications"    note="Phase 6" />
       </div>
     </div>
   );

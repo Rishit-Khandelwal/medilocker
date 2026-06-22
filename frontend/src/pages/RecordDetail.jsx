@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
-import { ArrowLeft, Download, Loader2, Trash2 } from "lucide-react";
+import { ArrowLeft, Download, Loader2, Trash2, Sparkles } from "lucide-react";
 import api from "../api/axios";
 import Layout from "../components/Layout.jsx";
 import Card from "../components/ui/Card.jsx";
@@ -16,10 +16,10 @@ const CATEGORIES = [
 const input = "w-full bg-surface border border-border rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-accent focus:border-accent transition-colors";
 
 export default function RecordDetail() {
-  const { id }   = useParams();
-  const navigate = useNavigate();
+  const { id }    = useParams();
+  const navigate  = useNavigate();
   const { toast } = useToast();
-  const blobUrl  = useRef(null);
+  const blobUrl   = useRef(null);
 
   const [record, setRecord]     = useState(null);
   const [fileUrl, setFileUrl]   = useState(null);
@@ -35,7 +35,6 @@ export default function RecordDetail() {
         const { data } = await api.get(`/records/${id}/`);
         setRecord(data);
         setEditForm({ title: data.title, category: data.category, description: data.description, tags: data.tags });
-
         const res = await api.get(`/records/${id}/download/`, { responseType: "blob" });
         const url = URL.createObjectURL(res.data);
         blobUrl.current = url;
@@ -76,17 +75,11 @@ export default function RecordDetail() {
   const handleDownload = () => {
     if (!fileUrl || !record) return;
     const a = document.createElement("a");
-    a.href = fileUrl;
-    a.download = record.original_filename;
-    a.click();
+    a.href = fileUrl; a.download = record.original_filename; a.click();
   };
 
   if (loading) return (
-    <Layout breadcrumb={["Records"]}>
-      <div className="flex justify-center py-20">
-        <Loader2 className="w-6 h-6 text-accent animate-spin" />
-      </div>
-    </Layout>
+    <Layout breadcrumb={["Records"]}><div className="flex justify-center py-20"><Loader2 className="w-6 h-6 text-accent animate-spin" /></div></Layout>
   );
 
   if (error) return (
@@ -130,32 +123,38 @@ export default function RecordDetail() {
 
         <div className="space-y-4">
           <Card>
-            <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center justify-between mb-3">
               <h2 className="font-medium text-foreground text-sm">Details</h2>
-              {!editing && (
-                <button onClick={() => setEditing(true)} className="text-xs text-accent hover:underline font-medium">Edit</button>
-              )}
+              {!editing && <button onClick={() => setEditing(true)} className="text-xs text-accent hover:underline font-medium">Edit</button>}
             </div>
+
+            {/* Ask AI button */}
+            {!editing && (
+              <Link to={`/ai?q=${encodeURIComponent(`Explain my "${record.title}" medical record. What are the key findings, and are there any values I should pay attention to?`)}`}
+                className="flex items-center justify-center gap-1.5 w-full py-2 mb-4 rounded-lg bg-accent/10 text-accent text-xs font-medium hover:bg-accent/15 transition-colors">
+                <Sparkles className="w-3.5 h-3.5" /> Ask AI about this record
+              </Link>
+            )}
 
             {editing ? (
               <div className="space-y-3">
                 <div>
                   <label className="block text-xs font-medium text-muted mb-1">Title</label>
-                  <input className={input} value={editForm.title} onChange={(e) => setEditForm({ ...editForm, title: e.target.value })} />
+                  <input className={input} value={editForm.title} onChange={e => setEditForm({ ...editForm, title: e.target.value })} />
                 </div>
                 <div>
                   <label className="block text-xs font-medium text-muted mb-1">Category</label>
-                  <select className={input} value={editForm.category} onChange={(e) => setEditForm({ ...editForm, category: e.target.value })}>
+                  <select className={input} value={editForm.category} onChange={e => setEditForm({ ...editForm, category: e.target.value })}>
                     {CATEGORIES.map(({ value, label }) => <option key={value} value={value}>{label}</option>)}
                   </select>
                 </div>
                 <div>
                   <label className="block text-xs font-medium text-muted mb-1">Description</label>
-                  <textarea rows={3} className={input} value={editForm.description} onChange={(e) => setEditForm({ ...editForm, description: e.target.value })} />
+                  <textarea rows={3} className={input} value={editForm.description} onChange={e => setEditForm({ ...editForm, description: e.target.value })} />
                 </div>
                 <div>
                   <label className="block text-xs font-medium text-muted mb-1">Tags</label>
-                  <input className={input} value={editForm.tags} onChange={(e) => setEditForm({ ...editForm, tags: e.target.value })} />
+                  <input className={input} value={editForm.tags} onChange={e => setEditForm({ ...editForm, tags: e.target.value })} />
                 </div>
                 <div className="flex gap-2 pt-1">
                   <button onClick={handleSave} disabled={saving}
@@ -179,7 +178,7 @@ export default function RecordDetail() {
                   <div>
                     <dt className="text-xs text-muted mb-1">Tags</dt>
                     <dd className="flex flex-wrap gap-1">
-                      {record.tags_list.map((t) => (
+                      {record.tags_list.map(t => (
                         <span key={t} className="text-xs px-1.5 py-0.5 bg-accent/10 text-accent rounded">{t}</span>
                       ))}
                     </dd>

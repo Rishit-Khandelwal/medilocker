@@ -1,15 +1,35 @@
 import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Search, Sun, Moon, Bell, LogOut, ChevronDown, User, Menu } from "lucide-react";
+import {
+  Search, Sun, Moon, Bell, BellOff, LogOut, ChevronDown, User, Menu,
+  CheckCheck, FileText, Calendar, Pill, Siren,
+} from "lucide-react";
 import { useAuth } from "../../contexts/AuthContext.jsx";
 import { useTheme } from "../../contexts/ThemeContext.jsx";
+import { useNotifications } from "../../contexts/NotificationContext.jsx";
+
+const TYPE_ICON = {
+  UPLOAD_COMPLETE:      FileText,
+  APPOINTMENT_REMINDER: Calendar,
+  MEDICINE_REMINDER:    Pill,
+  EMERGENCY_TOKEN_USED: Siren,
+};
+
+function timeAgo(iso) {
+  const diff = (Date.now() - new Date(iso).getTime()) / 1000;
+  if (diff < 60)    return "Just now";
+  if (diff < 3600)  return `${Math.floor(diff / 60)}m ago`;
+  if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
+  return `${Math.floor(diff / 86400)}d ago`;
+}
 
 export default function Topbar({ onMenuClick, breadcrumb }) {
-  const { user, logout } = useAuth();
-  const { theme, toggleTheme } = useTheme();
+  const { user, logout }                       = useAuth();
+  const { theme, toggleTheme }                 = useTheme();
+  const { notifications, unreadCount, markRead, markAllRead } = useNotifications();
   const navigate = useNavigate();
 
-  const [search, setSearch]         = useState("");
+  const [search, setSearch]           = useState("");
   const [profileOpen, setProfileOpen] = useState(false);
   const [notifOpen, setNotifOpen]     = useState(false);
   const profileRef = useRef(null);
@@ -32,6 +52,12 @@ export default function Topbar({ onMenuClick, breadcrumb }) {
   const handleLogout = async () => {
     await logout();
     navigate("/login");
+  };
+
+  const handleNotifClick = (n) => {
+    if (!n.is_read) markRead(n.id);
+    setNotifOpen(false);
+    if (n.link) navigate(n.link);
   };
 
   return (
@@ -69,13 +95,51 @@ export default function Topbar({ onMenuClick, breadcrumb }) {
         </button>
 
         <div className="relative" ref={notifRef}>
-          <button onClick={() => setNotifOpen((v) => !v)} className="p-2 rounded-lg text-muted hover:text-foreground hover:bg-bg transition-colors">
+          <button onClick={() => setNotifOpen((v) => !v)} className="relative p-2 rounded-lg text-muted hover:text-foreground hover:bg-bg transition-colors">
             <Bell className="w-4 h-4" />
+            {unreadCount > 0 && (
+              <span className="absolute top-1 right-1 min-w-[14px] h-[14px] px-0.5 bg-danger text-white text-[9px] font-bold rounded-full flex items-center justify-center">
+                {unreadCount > 9 ? "9+" : unreadCount}
+              </span>
+            )}
           </button>
+
           {notifOpen && (
-            <div className="absolute right-0 mt-2 w-64 bg-surface border border-border rounded-xl shadow-md p-4 z-30">
-              <p className="text-xs font-medium text-foreground mb-1">Notifications</p>
-              <p className="text-xs text-muted">No notifications yet — real-time alerts arrive in Phase 6.</p>
+            <div className="absolute right-0 mt-2 w-80 bg-surface border border-border rounded-xl shadow-md z-30 overflow-hidden">
+              <div className="flex items-center justify-between px-4 py-3 border-b border-border">
+                <p className="text-sm font-medium text-foreground">Notifications</p>
+                {unreadCount > 0 && (
+                  <button onClick={markAllRead} className="text-xs text-accent hover:underline font-medium flex items-center gap-1">
+                    <CheckCheck className="w-3 h-3" /> Mark all read
+                  </button>
+                )}
+              </div>
+              <div className="max-h-80 overflow-y-auto">
+                {notifications.length === 0 ? (
+                  <div className="px-4 py-8 text-center">
+                    <BellOff className="w-5 h-5 text-muted mx-auto mb-2" />
+                    <p className="text-xs text-muted">No notifications yet</p>
+                  </div>
+                ) : (
+                  notifications.map((n) => {
+                    const Icon = TYPE_ICON[n.type] || Bell;
+                    return (
+                      <button key={n.id} onClick={() => handleNotifClick(n)}
+                        className={`w-full text-left px-4 py-3 border-b border-border last:border-0 flex gap-3 hover:bg-bg transition-colors ${!n.is_read ? "bg-accent/5" : ""}`}>
+                        <div className="w-7 h-7 rounded-lg bg-accent/10 text-accent flex items-center justify-center flex-shrink-0">
+                          <Icon className="w-3.5 h-3.5" />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-xs font-medium text-foreground truncate">{n.title}</p>
+                          {n.body && <p className="text-xs text-muted mt-0.5 line-clamp-2">{n.body}</p>}
+                          <p className="text-[10px] text-muted mt-1">{timeAgo(n.created_at)}</p>
+                        </div>
+                        {!n.is_read && <div className="w-1.5 h-1.5 rounded-full bg-accent flex-shrink-0 mt-1" />}
+                      </button>
+                    );
+                  })
+                )}
+              </div>
             </div>
           )}
         </div>

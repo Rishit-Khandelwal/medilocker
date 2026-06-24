@@ -1,0 +1,29 @@
+# Usage: docker compose -f docker-compose.yml -f docker-compose.dev.yml up
+version: "3.9"
+
+services:
+
+  backend:
+    volumes:
+      - ./backend:/app          # hot-reload Django code
+      - media_files:/app/media
+      - static_files:/app/staticfiles
+    environment:
+      DEBUG: "True"
+    command: python manage.py runserver 0.0.0.0:8000
+
+  celery_worker:
+    volumes:
+      - ./backend:/app
+      - media_files:/app/media
+    command: celery -A config worker -l info --pool=solo
+
+  celery_beat:
+    volumes:
+      - ./backend:/app
+    command: celery -A config beat -l info
+
+  # In dev, Vite handles the frontend — no nginx needed
+  nginx:
+    profiles:
+      - nginx-dev          # exclude nginx from default dev stack

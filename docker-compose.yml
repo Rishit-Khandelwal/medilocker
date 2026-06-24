@@ -1,0 +1,130 @@
+version: "3.9"
+
+services:
+
+  # ── Database ──────────────────────────────────────────────────────────────
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB:       ${DB_NAME}
+      POSTGRES_USER:     ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    healthcheck:
+      test:     ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+      interval: 10s
+      timeout:  5s
+      retries:  5
+
+  # ── Cache / Message broker ────────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test:     ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout:  5s
+      retries:  5
+
+  # ── Vector DB ─────────────────────────────────────────────────────────────
+  qdrant:
+    image: qdrant/qdrant:latest
+    restart: unless-stopped
+    volumes:
+      - qdrant_data:/qdrant/storage
+
+  # ── Django / Daphne (HTTP + WebSocket) ───────────────────────────────────
+  backend:
+    build:
+      context:    ./backend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    env_file: ./backend/.env
+    volumes:
+      - media_files:/app/media
+      - static_files:/app/staticfiles
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      qdrant:
+        condition: service_started
+    expose:
+      - "8000"
+    command: /app/entrypoint.sh
+
+  # ── Celery worker ─────────────────────────────────────────────────────────
+  celery_worker:
+    build:
+      context:    ./backend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    env_file: ./backend/.env
+    volumes:
+      - media_files:/app/media
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: >
+      celery -A config worker
+      -l info
+      --pool=prefork
+      --concurrency=2
+      -Q celery
+
+  # ── Celery beat ───────────────────────────────────────────────────────────
+  celery_beat:
+    build:
+      context:    ./backend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    env_file: ./backend/.env
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: celery -A config beat -l info
+
+  # ── Nginx (reverse proxy + React SPA) ────────────────────────────────────
+  nginx:
+    build:
+      context:    .            # root — needs both frontend/ and nginx/ dirs
+      dockerfile: backend/nginx/Dockerfile
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - static_files:/app/staticfiles:ro
+      - media_files:/app/media:ro
+      # Uncomment for HTTPS with Let's Encrypt or your own certs:
+      # - ./nginx/certs:/etc/nginx/certs:ro
+    depends_on:
+      - backend
+
+  # ── Ollama (local LLM — optional profile) ────────────────────────────────
+  ollama:
+    image: ollama/ollama:latest
+    restart: unless-stopped
+    volumes:
+      - ollama_data:/root/.ollama
+    expose:
+      - "11434"
+    profiles:
+      - ollama   # only starts with: docker compose --profile ollama up
+
+volumes:
+  postgres_data:
+  redis_data:
+  qdrant_data:
+  media_files:
+  static_files:
+  ollama_data:

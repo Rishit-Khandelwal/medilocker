@@ -189,3 +189,58 @@ GEMINI_API_KEY  = config("GEMINI_API_KEY",  default="")
 OLLAMA_BASE_URL = config("OLLAMA_BASE_URL", default="http://localhost:11434")
 OLLAMA_MODEL    = config("OLLAMA_MODEL",    default="llama3.2:3b")
 AI_PROVIDER     = config("AI_PROVIDER",     default="auto")   # auto | ollama | gemini
+
+
+# ── Production security (activates automatically when DEBUG=False) ─────────────
+if not DEBUG:
+    SECURE_PROXY_SSL_HEADER           = ("HTTP_X_FORWARDED_PROTO", "https")
+    SECURE_SSL_REDIRECT               = config("SECURE_SSL_REDIRECT", default=False, cast=bool)
+    SESSION_COOKIE_SECURE             = True
+    CSRF_COOKIE_SECURE                = True
+    SECURE_HSTS_SECONDS               = 31536000
+    SECURE_HSTS_INCLUDE_SUBDOMAINS    = True
+    SECURE_HSTS_PRELOAD               = True
+    SECURE_CONTENT_TYPE_NOSNIFF       = True
+    X_FRAME_OPTIONS                   = "DENY"
+    SECURE_BROWSER_XSS_FILTER         = True
+    # Prevent Nginx from buffering SSE (AI streaming) responses
+    # -- set via X-Accel-Buffering header in the view, not here
+
+# ── Logging ────────────────────────────────────────────────────────────────────
+LOGGING = {
+    "version":                  1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "verbose": {
+            "format":  "{levelname} {asctime} {name} {message}",
+            "style":   "{",
+        },
+    },
+    "handlers": {
+        "console": {
+            "class":     "logging.StreamHandler",
+            "formatter": "verbose",
+        },
+    },
+    "root": {
+        "handlers": ["console"],
+        "level":    config("LOG_LEVEL", default="INFO"),
+    },
+    "loggers": {
+        "django": {
+            "handlers":  ["console"],
+            "level":     config("DJANGO_LOG_LEVEL", default="WARNING"),
+            "propagate": False,
+        },
+        "apps": {
+            "handlers":  ["console"],
+            "level":     config("LOG_LEVEL", default="INFO"),
+            "propagate": False,
+        },
+        "celery": {
+            "handlers":  ["console"],
+            "level":     "INFO",
+            "propagate": False,
+        },
+    },
+}

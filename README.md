@@ -386,6 +386,6 @@ MIT — see [LICENSE](LICENSE)
 
 ## Author
 
-Built by [Rishit](https://github.com/yourusername) — a full-stack developer focused on AI-integrated systems and healthcare technology.
+Built by [Rishit](https://github.com/Rishit-Khandelwal) — a full-stack developer focused on AI-integrated systems and healthcare technology.
 
 > **Note:** This is a portfolio/learning project. It is not HIPAA-compliant and should not be used to store real patient data in a clinical setting without proper compliance review.
